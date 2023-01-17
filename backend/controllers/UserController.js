@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken")
 //helpers
 const createUserToken = require("../helpers/create-user-token")
 const getToken = require("../helpers/get-token")
-const getUserByToken = require ("../helpers/get-user-by-token");
+const getUserByToken = require("../helpers/get-user-by-token");
 
 
 module.exports = class UserController {
@@ -153,6 +153,7 @@ module.exports = class UserController {
 
     static async editUser(req, res) {
 
+
         const id = req.params.id;
         const token = getToken(req);
         const user = await getUserByToken(token);
@@ -161,13 +162,17 @@ module.exports = class UserController {
         const phone = req.body.phone;
         const password = req.body.password;
         const confirmpassword = req.body.confirmpassword;
-        let image = "";
 
+        if (req.file) {
+            user.image = req.file.filename;
+        }
 
         if (!name) {
             res.status(422).json({ message: "O nome é obrigatório" })
             return
         }
+        user.name = name;
+
         if (!email) {
             res.status(422).json({ message: "O email é obrigatório" })
             return
@@ -179,27 +184,36 @@ module.exports = class UserController {
             res.status(422).json({ message: "Por favor, utilize outro e-mail" });
             return;
         }
-
         user.email = email;
 
         if (!phone) {
             res.status(422).json({ message: "O phone é obrigatório" })
             return
         }
-        if (!password) {
-            res.status(422).json({ message: "O password é obrigatório" })
-            return
+        user.phone = phone;
+
+        if (password != confirmpassword) {
+            res.status(422).json({ message: "As senhas não conferem" });
+            return;
+        } else if (password === confirmpassword && password != null) {
+            const salt = await bcrypt.genSalt(12);
+            const passwordHash = await bcrypt.hash(password, salt);
+            user.password = passwordHash;
         }
-        if (!confirmpassword) {
-            res.status(422).json({ message: "O confirmpassword é obrigatório" })
-            return
+
+        res.status(200).json({ message: "User atualizado" });
+
+        try {
+            await User.findOneAndUpdate(
+                { _id: user.id },
+                { $set: user },
+                { new: true }
+            );
+
+            res.status(200).json({ message: "Usuário atualizado com sucesso!" })
+        } catch (error) {
+            return;
         }
-
-        
-
-        res.status(200).json({ user });
-
-
 
 
     }
