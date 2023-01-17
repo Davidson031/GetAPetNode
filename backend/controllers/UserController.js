@@ -10,6 +10,7 @@ const getUserByToken = require("../helpers/get-user-by-token");
 
 module.exports = class UserController {
 
+
     static async register(req, res) {
 
         const name = req.body.name
@@ -153,7 +154,6 @@ module.exports = class UserController {
 
     static async editUser(req, res) {
 
-
         const id = req.params.id;
         const token = getToken(req);
         const user = await getUserByToken(token);
@@ -214,7 +214,5 @@ module.exports = class UserController {
         } catch (error) {
             return;
         }
-
-
     }
 }
